@@ -4,10 +4,12 @@ import dotenv from "dotenv"
 import mongoose from "mongoose";
 import { DB_NAME } from "./constants.js";
 import connectDB from "./db/index.js";
+import { app } from "./app.js";
 
 dotenv.config({
     path: './env'
 })
+
 
 connectDB()
 .then(()=>{
@@ -20,5 +22,5 @@ connectDB()
     })
 })
 .catch((err)=> {
-    console.log(`MongoDB connectiono failed, ${err}`);
+    console.log(`MongoDB connection failed, ${err}`);
 })

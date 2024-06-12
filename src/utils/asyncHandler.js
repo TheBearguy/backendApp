@@ -1,7 +1,7 @@
 const asyncHandler = (requestHandler) => {
     // the fxn requestHandler is still to be wrapped in a function, 
     // here the fxn does not need to be async, as it is evaluating a Promise
-    (req, res, next) => {
+    return (req, res, next) => {
         Promise.resolve(requestHandler(req, res, next))
             .catch( (err) => next(err) )
     }
