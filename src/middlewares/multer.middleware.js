@@ -1,9 +1,5 @@
 import multer from "multer";
 
-function multerMiddleware (req, res, next) {
-    // if resolved : 
-    next()
-}
 
 const storage = multer.diskStorage(
     {
