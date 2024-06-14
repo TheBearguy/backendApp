@@ -4,6 +4,7 @@ import {User} from '../models/user.model.js'
 import {uploadOnCloudinary, deleteFromCloudinary} from '../utils/cloudinary.js'
 import { ApiRresponse } from '../utils/ApiResponse.js';
 import jwt from "jsonwebtoken"
+import mongoose, { mongo } from 'mongoose';
 
 
 const generateAccessAndRefreshTokens = async (userId) => {
@@ -462,23 +463,80 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
             }
         }
     ])
-
+    if (!channel?.length) {
+        throw new ApiError(
+            400, 
+            "Channel does not exists"
+        )
+    }
+    
+    return res.status(200).json(
+        new ApiRresponse(
+            200, 
+            channel[0], 
+            "User channel fetched successfully"
+        )
+    )
 })
 
-if (!channel?.length) {
-    throw new ApiError(
-        400, 
-        "Channel does not exists"
+const getWatchHistory = asyncHandler(async (req, res) => {
+    // _id is not the original mongodb id, 
+    // when we pass _id , mongoose internally converts it into the original mongodb id
+    // however this does not work the same in case of pipelines and aggregates
+    const user = User.aggregate(
+        [
+            {
+                $match: {
+                    _id: new mongoose.Types.ObjectId(req.user?._id) // This is a way to convert the ObjectId (pseudo id) into actual mongodb id
+                }
+            }, 
+            {
+                $lookup: {
+                    from: "videos", 
+                    foreignField: "_id",
+                    localField: "watchHistory", // for user,  it is the id of the video he has watched 
+                    as: "watchHistory", 
+                    pipeline: [
+                        {
+                            $lookup: {
+                                from: "users", 
+                                foreignField: "_id", 
+                                localField: "owner", 
+                                as: "owner",
+                                pipeline: [
+                                    {
+                                        $project: {
+                                            fullName: 1, 
+                                            username: 1, 
+                                            avatar: 1
+                                        }
+                                    }
+                                ]
+                            }
+                        }, 
+                        {
+                                $addFields: {
+                                    owner: {
+                                        $first: "$owner"
+                                    }
+                                }
+                        }
+                    ]
+                }
+            }
+        ]
     )
-}
 
-return res.status(200).json(
-    new ApiRresponse(
-        200, 
-        channel[0], 
-        "User channel fetched successfully"
+    return res.status(200)
+    .json(
+        new ApiRresponse(
+            200, 
+            user[0].watchHistory, 
+            "watch history fetched successfully"
+        )
     )
-)
+
+})
 
 console.log(channel);
 
@@ -491,6 +549,8 @@ export {
     getCurrentUser, 
     updateAccountDetails, 
     updateUserAvatar, 
-    updateUserCoverImage
+    updateUserCoverImage, 
+    getUserChannelProfile, 
+    getWatchHistory
 
 }
