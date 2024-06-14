@@ -1,5 +1,5 @@
 import {Router} from "express";
-import { logoutUser, loginUser, registerUser, refreshAccessToken, updateUserAvatar, updateAccountDetails, updateUserCoverImage, changeCurrentPassword, getCurrentUser, getUserChannelProfile, getWatchHistory } from "../controllers/user.controller.js";
+import { logoutUser, loginUser, registerUser, refreshAccessToken, updateUserAvatar, updateAccountDetails, updateUserCoverImage, changeCurrentPassword, getCurrentUser, getUserChannelProfile, getWatchHistory} from "../controllers/user.controller.js";
 import {upload} from "../middlewares/multer.middleware.js"
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 
@@ -36,6 +36,5 @@ router.route("/update/avatar").patch(verifyJWT, upload.single("avatar"), updateU
 router.route("/update/coverImage").patch(verifyJWT, upload.single("coverImage"), updateUserCoverImage)
 router.route("/c/:username").get(verifyJWT, getUserChannelProfile),
 router.route("/watch-history").get(verifyJWT, getWatchHistory)
-
 
 export default router

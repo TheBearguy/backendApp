@@ -469,7 +469,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
             "Channel does not exists"
         )
     }
-    
+    console.log(channel);
     return res.status(200).json(
         new ApiRresponse(
             200, 
@@ -538,7 +538,6 @@ const getWatchHistory = asyncHandler(async (req, res) => {
 
 })
 
-console.log(channel);
 
 export {
     registerUser,
