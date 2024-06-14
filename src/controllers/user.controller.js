@@ -324,7 +324,7 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
     const oldAvatar = await deleteFromCloudinary(oldAvatarCloudinaryUrl);
     console.log("OldAvatar: ", oldAvatar);
 
-    console.log(req.filles);
+    console.log(req.files);
     const avatarLocalPath = req.files?.path
 
     if (!avatarLocalPath) {

@@ -57,5 +57,5 @@ const deleteFromCloudinary = async (cloudinaryFilePath) => {
 
 export {
     uploadOnCloudinary,
-    deleteFromCloudinary
+    deleteFromCloudinary, 
 }

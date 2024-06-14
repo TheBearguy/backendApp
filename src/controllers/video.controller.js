@@ -88,7 +88,117 @@ const publishAVideo = asyncHandler(async (req, res) => {
 
 })
 
+const getVideoById = asyncHandler(async (req, res) => {
+    const { videoId } = req.params
+    //TODO: get video by id
+
+    if (!videoId) {
+        throw new ApiError(
+            400, 
+            "Invalid videoId"
+        )
+    }
+    console.log(videoId)
+
+    // const video = Video.findById(videoId) LOL
+
+    const video = await Video.find({
+        _id: videoId
+    })
+
+    if (!video) {
+        throw new ApiError(
+            400, 
+            "video not found"
+        )
+    }
+
+    return res.status(200)
+    .json(
+        new ApiRresponse(
+            200, 
+            video, 
+            "Video fetched successfully"
+        )
+    )
+
+})
+
+
+const updateVideo = asyncHandler(async (req, res) => {
+    const { videoId } = req.params
+    //TODO: update video details like title, description, thumbnail
+    const {title, description} = req.body
+
+    if (!title && !description) {
+        throw new ApiError(
+            400, 
+            "All fields are required to update those fields"
+        )
+    }
+
+    const thumbnailPath = req.files?.thumbnail?.path
+    if (!thumbnail) {
+        throw new ApiError(
+            400, 
+            "No thumbnail received to update it"
+        )
+    }
+
+    const videoFilePath = req.files?.thumbnail?.path
+    if (!thumbnail) {
+        throw new ApiError(
+            400, 
+            "No videofile received to update it"
+        )
+    }
+
+    const video = await Video.findByIdAndUpdate({
+        _id: videoId
+        }, 
+        {
+            title, 
+            description
+        }
+    )
+
+    const videoWithOldThumbnail = await User.findById(
+        videoId
+    )
+
+    if (!videoWithOldThumbnail || !videoWithOldThumbnail.thumbnail) {
+        throw new ApiError(
+            400, 
+            "video or thumbnail not found"
+        )
+    }
+    const oldthumbnailCloudinaryUrl = videoWithOldThumbnail.thumbnail;
+    console.log("oldthumbnailCloudinaryUrl: ", oldthumbnailCloudinaryUrl);
+
+    const oldthumbnail = await deleteFromCloudinary(oldthumbnailCloudinaryUrl);
+    console.log("Oldthumbnail: ", oldthumbnail);
+
+    const thumbnail = await uploadOnCloudinary(thumbnailPath)
+    console.log(thumbnail);
+    if (!thumbnail.url) {
+        throw new ApiError(400, "Error while uploading thumbnail")
+    }
+    const user = await User.findByIdAndUpdate(
+        videoId,
+        {
+            $set: {
+                thumbnail: thumbnail.url
+            }
+        },
+        {new: true}
+    )
+
+
+})
+
+
 export {
     allVideos, 
-    publishAVideo
+    publishAVideo, 
+    getVideoById
 }
