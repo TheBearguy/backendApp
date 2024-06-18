@@ -31,6 +31,11 @@ const allVideos = asyncHandler(async (req, res) => {
         )
     }
 
+    console.log('Raw Query:', query);
+    // console.log(typeof query);
+    
+    // const searchQuery = typeof query === 'string' ? query : JSON.stringify(query);
+
     // Standard practice of creating filters for searches on the page
     // Its better than just displaying the content on an endless page
 
@@ -41,37 +46,47 @@ const allVideos = asyncHandler(async (req, res) => {
     const searchVideo = {
         userId: userId,
         $or: [
-            { title: { $regex: query, $options: "i" } },
-            { description: { $regex: query, $options: "i" } }
+            { title: {$regex: new RegExp(query, 'i')}},
+            { description:  {$regex: new RegExp(query, 'i')}  }
         ]
     };
     console.log(searchVideo);
-    sortingCriteria[sortBy] = sortType === "desc"? -1 : 1;
-
+    
+    if(sortBy) {
+        sortingCriteria[sortBy] = sortType === "desc"? -1 : 1;
+    }
     // search with the sorting criteria for some limit per page and keep a reference of how many videos have been displayed so each time we know which videos to skip and which ones to begin loading from
     console.log(sortingCriteria);
-    const videos = await Video.find(searchVideo)
-    .sort(sortingCriteria)
-    .skip((pageNumber-1) * limit)
-    .limit(limitNumber)
+    try {
+        const videos = await Video.find(searchVideo)
+        .sort(sortingCriteria)
+        .skip((pageNumber-1) * limit)
+        .limit(limitNumber)
+        
+        console.log(videos);
+        // console.log(`VIDEOS FETCHED = ${videos}`);
+        if (videos === null) {
+            throw new ApiError(
+                400, 
+                "No such videos found / error while fetching videos"
+            )
+        }
     
-    console.log(videos);
-    // console.log(`VIDEOS FETCHED = ${videos}`);
-    if (videos === null) {
+        return res.status(200)
+        .json(
+            new ApiRresponse(
+                200, 
+                videos, 
+                "All videos fetched successfully"
+            )
+        )
+    } catch (error) {
+        console.log("Error occured: " ,error);
         throw new ApiError(
             400, 
-            "No such videos found / error while fetching videos"
+            error.message || "Error in getting videos"
         )
     }
-
-    return res.status(200)
-    .json(
-        new ApiRresponse(
-            200, 
-            videos, 
-            "All videos fetched successfully"
-        )
-    )
     // res.send("hi there")
     // console.log("oye")
 })
@@ -206,6 +221,10 @@ const publishAVideo = asyncHandler(async (req, res) => {
     if (!video) {
         throw new ApiError(400, "Video couldnt be added in the db")
     }
+
+    video.owner = req.user?._id
+    await video.save();
+    console.log(video);
 
     const videoUploaded = await Video.findById(video._id)
     return res.status(200)
@@ -358,9 +377,35 @@ const deleteVideo = asyncHandler(async (req, res) => {
 
 })
 
+
+const toggleIsPublished = asyncHandler(async (req, res) => {
+    const {videoId} = req.params;
+    if (!videoId) {
+        throw new ApiError(
+            400, 
+            "videoId is missing"
+        )
+    }
+
+    const video = await Video.findById(videoId);
+
+    video.isPublished = !video.isPublished;
+    await video.save()
+
+    return res.json(
+        new ApiRresponse(
+            200, 
+            "Togglee Updated"
+        )
+    )
+
+})
+
 export {
     allVideos, 
     publishAVideo, 
     getVideoById, 
-    updateVideo
+    updateVideo, 
+    deleteVideo, 
+    toggleIsPublished
 }

@@ -5,8 +5,11 @@ import { allVideos, getVideoById, publishAVideo, updateVideo } from "../controll
 
 const router = Router();
 
-router.route("/").get(verifyJWT, allVideos)
-router.route("/").post(verifyJWT,
+router.route("/").get(
+    // verifyJWT,
+    allVideos)
+router.route("/").post(
+    // verifyJWT,
     upload.fields([
 
         {
@@ -20,8 +23,14 @@ router.route("/").post(verifyJWT,
 
     ]), publishAVideo
 )
-router.route("/vid/:videoId").get(verifyJWT, getVideoById)
-router.route("/update-vid/:videoId").patch(verifyJWT, updateVideo)
-router.route("/delete-vid/:videoId").delete(verifyJWT, updateVideo)
+router.route("/vid/:videoId").get(
+    // verifyJWT,
+     getVideoById)
+router.route("/update-vid/:videoId").patch(
+    // verifyJWT,
+     updateVideo)
+router.route("/delete-vid/:videoId").delete(
+    // verifyJWT,
+     updateVideo)
 
 export default router;
