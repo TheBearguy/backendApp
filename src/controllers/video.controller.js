@@ -10,7 +10,60 @@ import { upload } from "../middlewares/multer.middleware.js"
 
 const allVideos = asyncHandler(async (req, res) => {
     // TODO : get all videos on the home page
-    const videos = await Video.find({})
+
+    const {page = '1', limit = "10", sortBy, sortType, query, userId} = req.query;
+    // console.log(req.query);
+
+    const pageNumber = parseInt(page, 10);
+    const limitNumber = parseInt(limit, 10);
+    console.log(req.query);
+
+    if (!userId) {
+        throw new ApiError(400, 
+            "User not found"
+        )
+    }
+
+    if (!query) {
+        throw new ApiError(
+            400, 
+            "no query provided"
+        )
+    }
+
+    // Standard practice of creating filters for searches on the page
+    // Its better than just displaying the content on an endless page
+
+    const sortingCriteria = {}
+    // This is how we'll get to know which user is requesting for a particular video
+
+    // Gathering data about what to search
+    const searchVideo = {
+        userId: userId,
+        $or: [
+            { title: { $regex: query, $options: "i" } },
+            { description: { $regex: query, $options: "i" } }
+        ]
+    };
+    console.log(searchVideo);
+    sortingCriteria[sortBy] = sortType === "desc"? -1 : 1;
+
+    // search with the sorting criteria for some limit per page and keep a reference of how many videos have been displayed so each time we know which videos to skip and which ones to begin loading from
+    console.log(sortingCriteria);
+    const videos = await Video.find(searchVideo)
+    .sort(sortingCriteria)
+    .skip((pageNumber-1) * limit)
+    .limit(limitNumber)
+    
+    console.log(videos);
+    // console.log(`VIDEOS FETCHED = ${videos}`);
+    if (videos === null) {
+        throw new ApiError(
+            400, 
+            "No such videos found / error while fetching videos"
+        )
+    }
+
     return res.status(200)
     .json(
         new ApiRresponse(
@@ -19,9 +72,87 @@ const allVideos = asyncHandler(async (req, res) => {
             "All videos fetched successfully"
         )
     )
-    res.send("hi there")
-    console.log("oye")
+    // res.send("hi there")
+    // console.log("oye")
 })
+// Alternative approach: 
+// Create an Aggregate, 
+// create a pipeline
+// add each step (like sorting, skipping, limitting) as a separate stage in the pipeline
+// final output will be the filtered videos
+
+// const allVideos = asyncHandler(async (req, res) => {
+//     const aggregate = Video.aggregate();
+//     const {page= 1, limit = 10, sortBy = "views", sortType = 1, query = "", userId} =  req.query;
+
+//     if (!userId) {
+//         throw new ApiError(400, 
+//             "User not found"
+//         )
+//     }
+
+//     if (!query) {
+//         throw new ApiError(
+//             400, 
+//             "no query provided"
+//         )
+//     }
+
+//     const pipeline = [];
+
+//     pipeline.push(
+//         {
+//             $match: {
+//                 userId: userId
+//             }
+//         }
+//     )
+
+//     pipeline.push(
+//         {
+//             $skip: (page - 1) * limit
+//         }
+//     )
+//     pipeline.push(
+//         {
+//             $limit: parseInt(limit)
+//         }
+//     )
+
+//     if (sortBy && sortType) {
+//         const sortStage = {
+//             $sort : {
+//                 [sortBy]: sortType === "desc"? -1 : 1
+//             }
+//         }
+    
+//         pipeline.push(sortStage)
+//     } else {
+//         throw new ApiError(
+//             400, 
+//             "Some error in sorting"
+//         )
+//     }
+
+// // Paginate the reuslts of the aggregate pipeline
+//     Video.aggregatePaginate(aggregate, {page, limit}, pipeline)
+//     .then(
+//         res.status(200)
+//         .json(
+//             new ApiRresponse(
+//                 200, 
+//                 "Everything worked, you cooked good"
+//             )
+//         )
+//     )
+//     .catch((error) => {
+//         console.log(error);
+//         throw new ApiError(
+//             400, 
+//             `some error at the end: ${error}`
+//         )
+//     })
+// })
 
 
 const publishAVideo = asyncHandler(async (req, res) => {
@@ -197,8 +328,39 @@ const updateVideo = asyncHandler(async (req, res) => {
 })
 
 
+const deleteVideo = asyncHandler(async (req, res) => {
+    const {videoId} = req.params
+    if (!videoId) {
+        throw new ApiError(
+            400, 
+            "Could not find videoId for deletion"
+        )
+    }
+
+    await Video.findByIdAndDelete(videoId)
+
+    const video = await Video.findById(videoId)
+
+    if (video) {
+        throw new ApiError(
+            400, 
+            "Video is still there"
+        )
+    }
+
+    res.status(200)
+    .json(
+        new ApiRresponse(
+            200, 
+            "Video deleted successfully"
+        )
+    )
+
+})
+
 export {
     allVideos, 
     publishAVideo, 
-    getVideoById
+    getVideoById, 
+    updateVideo
 }
