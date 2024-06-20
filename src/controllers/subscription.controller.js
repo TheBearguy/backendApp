@@ -60,14 +60,16 @@ const getChannelSubscriber = asyncHandler(async (req, res) => {
         )
     }
 
-    Subscription.aggregate(
+    const channelSubscribers = await Subscription.aggregate(
         [
             {
                 $match: {
+                    // Look for those documents that contain myself as thhe channel
                     channelId: new mongoose.Types.ObjectId(`${channelId}`)
                 }
             }, 
             {
+                // Now once we've got the needed documents, make the connection between  the subscriber and the user, bcoz the subscriber is nothing but some other user
                 $lookup:{
                     from: "users", 
                     localField: "subscriber", 
@@ -84,6 +86,7 @@ const getChannelSubscriber = asyncHandler(async (req, res) => {
                     ]
                 }
             }, 
+            // out of all the infor the document contains, do not display all of them, (user doesnt need to know them all), display on ly the ones requried
             {
                 subscriber :1, 
                 createdAt :1
@@ -102,6 +105,67 @@ const getChannelSubscriber = asyncHandler(async (req, res) => {
 
 })
 
+
+
+const getSubscribedChannels = asyncHandler(async (req, res) => {
+
+    const { channelId } = req.params;
+    if (!channelId) {
+        throw new ApiError(
+            400, 
+            "channelID not found"
+        )
+    }
+
+    const subscribedChannels = await Subscription.aggregate([
+        {
+            $match: {
+                // Look for those documents that contain myself as thhe subscriber
+                subscriber: new mongoose.Types.ObjectId(`${channelId}`)
+            }
+        }, 
+        {
+            // Now that we've got the documents of concern, make connection between the channel and the user, bcoz, a channel is nothing but some other user
+            $lookup: {
+                localField: "channel",
+                from: "user", 
+                foreignField: "_id", 
+                as: "channel", 
+                pipeline: [
+                    {
+                        $project: {
+                            username: 1, 
+                            fullName: 1, 
+                            avatar: 1
+                        }
+                    }
+                ]
+            }
+        }, 
+        {
+            // out of all the infor the document contains, do not display all of them, (user doesnt need to know them all), display on ly the ones requried
+
+            $project: {
+                channel: 1, 
+                createdAt: 1
+            }
+        }
+    ])
+
+    res.status(200)
+    .json(
+        new ApiRresponse(
+            200, 
+            subscribedChannels, 
+            "These are the channels you've subscribed to "
+        )
+    )
+
+})
+
+
 export {
-    toggelSubscription
+    toggelSubscription, 
+    getChannelSubscriber, 
+    getSubscribedChannels
 }
