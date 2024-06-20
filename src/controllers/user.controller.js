@@ -487,14 +487,14 @@ const getWatchHistory = asyncHandler(async (req, res) => {
         [
             {
                 $match: {
-                    _id: new mongoose.Types.ObjectId(req.user?._id) // This is a way to convert the ObjectId (pseudo id) into actual mongodb id
+                    _id: new mongoose.Types.ObjectId(req.user?._id) // This is a way to convert the ObjectId (pseudo id) into actual mongodb id 
                 }
             }, 
             {
                 $lookup: {
                     from: "videos", 
                     foreignField: "_id",
-                    localField: "watchHistory", // for user,  it is the id of the video he has watched 
+                    localField: "watchHistory", // for user,  it is the id of t he video he has watched 
                     as: "watchHistory", 
                     pipeline: [
                         {
