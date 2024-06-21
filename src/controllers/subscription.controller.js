@@ -88,8 +88,10 @@ const getChannelSubscriber = asyncHandler(async (req, res) => {
             }, 
             // out of all the infor the document contains, do not display all of them, (user doesnt need to know them all), display on ly the ones requried
             {
-                subscriber :1, 
+                $project: {
+                    subscriber :1, 
                 createdAt :1
+                }
 
             }
         ]
