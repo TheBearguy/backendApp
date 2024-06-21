@@ -147,21 +147,21 @@ const toggleTweetPostLike = asyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200, { isTweetLiked }, "tweet like status"))
 })
 
-// POPULATE 
-// const getAllLikedVideos = asyncHandler(async (req, res) => {
 
-//     const likedVideos = await Like.find(
-//         {
-//             likedBy: req.user._id,
-//             video:{$ne: null}
-//         }
-//     ).populate("video")
+const getAllLikedVideos = asyncHandler(async (req, res) => {
 
-//     if (!likedVideos) {
-//         throw new ApiError(400,"error while fetching liked videos")
-//     }
+    const likedVideos = await Like.find(
+        {
+            likedBy: req.user._id,
+            video:{$ne: null}
+        }
+    ).populate("video")
+
+    if (!likedVideos) {
+        throw new ApiError(400,"error while fetching liked videos")
+    }
     
-//     return res.status(200).json(new ApiResponse(200,likedVideos,"liked video fetched"))
-// })
+    return res.status(200).json(new ApiResponse(200,likedVideos,"liked video fetched"))
+})
 
 export { toggleVideoLike, toggelCommentLike, toggleTweetPostLike,getAllLikedVideos }
